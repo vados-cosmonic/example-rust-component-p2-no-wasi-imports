@@ -1,0 +1,9 @@
+package test:rust;
+
+interface foo {
+    foo: func() -> string;          
+}
+
+world component {
+    export foo;
+}

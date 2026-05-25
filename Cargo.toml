@@ -1,0 +1,14 @@
+[package]
+name = "test-p2"
+version = "0.1.0"
+edition = "2024"
+
+# NOTE: We *must* build a lib here, because while you can build
+# a bin into a wasm component, it will expect to be executed via
+# wasi:cli/run@0.2.0, and will pull in many WASI imports to 
+# closely approximate a platform-dependent CLI program would.
+[lib]
+crate-type = [ "cdylib" ]
+
+[dependencies]
+wit-bindgen = { version = "0.57.1", default-features = false, features = [ "macros"]  }
