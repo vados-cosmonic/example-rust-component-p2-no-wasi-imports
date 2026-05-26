@@ -69,6 +69,142 @@ Once built, the component can be inspected and have it's WIT printed (ensure you
 just print-wit
 ```
 
+When performing the "simple" build, you will see the
+
+<details>
+<summary>Full WIT imports</summary>
+
+```wit
+package root:component;
+
+world root {
+  import wasi:io/poll@0.2.6;
+  import wasi:io/error@0.2.6;
+  import wasi:io/streams@0.2.6;
+  import wasi:cli/environment@0.2.6;
+  import wasi:cli/exit@0.2.6;
+  import wasi:cli/stdin@0.2.6;
+  import wasi:cli/stdout@0.2.6;
+  import wasi:cli/stderr@0.2.6;
+  import wasi:cli/terminal-input@0.2.6;
+  import wasi:cli/terminal-output@0.2.6;
+  import wasi:cli/terminal-stdin@0.2.6;
+  import wasi:cli/terminal-stdout@0.2.6;
+  import wasi:cli/terminal-stderr@0.2.6;
+
+  export test:rust/foo;
+}
+package wasi:io@0.2.6 {
+  interface poll {
+    resource pollable {
+      block: func();
+    }
+  }
+  interface error {
+    resource error;
+  }
+  interface streams {
+    use error.{error};
+    use poll.{pollable};
+
+    resource input-stream;
+
+    resource output-stream {
+      check-write: func() -> result<u64, stream-error>;
+      write: func(contents: list<u8>) -> result<_, stream-error>;
+      blocking-flush: func() -> result<_, stream-error>;
+      subscribe: func() -> pollable;
+    }
+
+    variant stream-error {
+      last-operation-failed(error),
+      closed,
+    }
+  }
+}
+
+
+package wasi:cli@0.2.6 {
+  interface environment {
+    get-environment: func() -> list<tuple<string, string>>;
+  }
+  interface exit {
+    exit: func(status: result);
+  }
+  interface stdin {
+    use wasi:io/streams@0.2.6.{input-stream};
+
+    get-stdin: func() -> input-stream;
+  }
+  interface stdout {
+    use wasi:io/streams@0.2.6.{output-stream};
+
+    get-stdout: func() -> output-stream;
+  }
+  interface stderr {
+    use wasi:io/streams@0.2.6.{output-stream};
+
+    get-stderr: func() -> output-stream;
+  }
+  interface terminal-input {
+    resource terminal-input;
+  }
+  interface terminal-output {
+    resource terminal-output;
+  }
+  interface terminal-stdin {
+    use terminal-input.{terminal-input};
+
+    get-terminal-stdin: func() -> option<terminal-input>;
+  }
+  interface terminal-stdout {
+    use terminal-output.{terminal-output};
+
+    get-terminal-stdout: func() -> option<terminal-output>;
+  }
+  interface terminal-stderr {
+    use terminal-output.{terminal-output};
+
+    get-terminal-stderr: func() -> option<terminal-output>;
+  }
+}
+
+
+package test:rust {
+  interface foo {
+    foo: func() -> string;
+  }
+}
+```
+
+</details>
+
+Performing the more complicated "no-wasi" build will yield a component with trimmed wit imports,
+as the unwind machinery is excluded:
+
+<details>
+<summary>Trimmed WIT imports</summary>
+
+```wit
+package root:component;
+
+world root {
+  export test:rust/foo;
+}
+package test:rust {
+  interface foo {
+    foo: func() -> string;
+  }
+}
+```
+
+</details>
+
+> [!NOTE]
+> While the original WIT interface contains no world named `root`, the bulit component
+> does -- this is an artifact of the tooling, as worlds may be combined/modified/resolved
+> and rewritten slightly during component building.
+
 ## Running the built components
 
 If you have [`wasmtime`][wasmtime] installed, we can run the WebAssembly component:
