@@ -28,6 +28,8 @@ world component {
 }
 ```
 
+[wit]: https://github.com/WebAssembly/component-model/blob/main/design/mvp/WIT.md
+
 ## Dependencies
 
 This rust project depends on a few things:
